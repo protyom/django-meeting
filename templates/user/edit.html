@@ -1,0 +1,121 @@
+
+{% extends 'base.html' %}
+
+{% load countries %}
+
+{% block content %}
+    {% get_countries as countries %}
+    <script>
+    $(document).ready(function() {
+
+        $.ajax({
+                method: "GET",
+                url: "/api/v1/meetings/finished/",
+                dataType: "json",
+                success: function (json) {
+
+                    let arrayLength = json.length;
+                    let meeting_fin = document.getElementsByClassName("finished-meetings")[0];
+                    if(arrayLength===0){
+                        meeting_fin.innerHTML = "<h3>No meetings</h3>"
+                    }
+                    for (let i = 0; i < arrayLength; i++) {
+                        let dict = json[i];
+                        meeting_fin.innerHTML+="<br>";
+                        meeting_fin.innerHTML += '<div style="border-radius: 25px;' +
+                            'border: 2px solid #73AD21;width:50%; padding:30px; " id='+dict["pk"]+'></div>';
+                        document.getElementById(dict["pk"]).innerHTML = "<h2>" +json[i]["name"]+
+                            "</h2><br>"+
+                        '<p>Teacher: '+dict["teacher_name"]+' ('+dict["teacher_country"]+')</p><br>'+
+                        '<p>Date: '+dict["date"].replace(new RegExp("[TZ]", "g"),' ')+'</p><br>'+'<p id="places '+dict["pk"]+'">Places: '+dict["students_count"]+' ('+
+                            (dict["students_count"]-dict["students"].length).toString()+' available)</p><br>'+
+                        '<div style="width:75%">'+dict["details"]+'</div><br>';
+                    }
+                },
+                error: function (json) {
+                    alert("No more meetings");
+                }
+        });
+         $.ajax({
+                method: "GET",
+                url: "/api/v1/meetings/future/",
+                dataType: "json",
+                success: function (json) {
+
+                    let arrayLength = json.length;
+                    let meeting_fut = document.getElementsByClassName("future-meetings")[0];
+                    if(arrayLength===0){
+                        meeting_fut.innerHTML = "<h3>No meetings</h3>"
+                    }
+                    for (let i = 0; i < arrayLength; i++) {
+                        let dict = json[i];
+                        meeting_fut.innerHTML+="<br>";
+                        meeting_fut.innerHTML += '<div style="border-radius: 25px;' +
+                            'border: 2px solid #73AD21;width:50%; padding:30px; " id='+dict["pk"]+'></div>';
+                        document.getElementById(dict["pk"]).innerHTML = "<h2>" +json[i]["name"]+
+                            "</h2><br>"+
+                        '<p>Teacher: '+dict["teacher_name"]+' ('+dict["teacher_country"]+')</p><br>'+
+                        '<p>Date: '+dict["date"].replace(new RegExp("[TZ]", "g"), ' ')+'</p><br>'+'<p id="places '+dict["pk"]+'">Places: '+dict["students_count"]+' ('+
+                            (dict["students_count"]-dict["students"].length).toString()+' available)</p><br>'+
+                        '<div style="width:75%">'+dict["details"]+'</div><br>';
+                    }
+                },
+                error: function (json) {
+                    alert("No more meetings");
+                }
+         });
+        $('.edit-form').submit(function (event) {
+            event.preventDefault();
+            let $formData = $(this).serialize();
+            let $crf_token = $('[name="csrfmiddlewaretoken"]').attr('value');
+            $.ajax({
+                method: "PUT",
+                url: "/api/v1/users/edit/{{ pk }}/",
+                data: $formData,
+                dataType: "json",
+                headers:{"X-CSRFToken": $crf_token},
+                success: function (json) {
+                    alert("You have successfully edited!");
+                },
+                error: function (json) {
+                    alert("Error!");
+                }
+            })
+        })
+    })
+    </script>
+
+    <h2>Edit</h2>
+    <div class="popa"></div>
+    <form method="put" class="edit-form" id="edit-form">
+        {% csrf_token %}
+        <p><label for="first_name">First Name:</label>
+        <input type="text" name="first_name" id="first_name" value="{{ first_name }}"></p>
+
+        <p><label for="last_name">Last Name:</label>
+        <input type="text" name="last_name" id="last_name" value="{{ last_name }}"></p>
+
+     <p><label for="country">Country:</label>
+        <select name="country">
+            {% for country in countries %}
+                {% if country.name == user_country %}
+                    <option value="{{ country.code }}" selected>{{ country.name }}</option>
+                {% else %}
+                     <option value="{{ country.code }}">{{ country.name }}</option>
+                {% endif %}
+            {% endfor %}
+        </select></p>
+
+        <input value="Submit" type="submit" >
+  </form>
+    <HR>
+    <H2>Finished meetings</H2>
+    <div class="finished-meetings">
+    </div>
+    <HR>
+
+    <H2>Future meetings</H2>
+    <div class="future-meetings">
+
+    </div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <script>
+    $(document).ready(function() {
+        function logout(){
+            $.ajax({
+                method: "POST",
+                url: "/api/v1/rest-auth/logout/",
+                headers:{"X-CSRFToken": "{{ csrf_token }}"},
+                dataType: "json",
+                success: function (json) {
+                    alert("Logged out successfully");
+                    window.location.href = "{% url 'home' %}";
+                },
+                error: function (json) {
+                     $.each(json["responseJSON"], function(key, value) {
+                        alert(value);
+                     });
+                    location.reload()
+                }
+            })
+        }
+        logout();
+    })
+    </script>
+
+    <h2>Log out</h2>
+
+{% endblock %}

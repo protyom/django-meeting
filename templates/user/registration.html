@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <script>
+    $(document).ready(function() {
+        $('.register-form').submit(function (event) {
+            event.preventDefault();
+            let $formData = $(this).serialize();
+            let $textComment = $("#comment-form-text").val();
+            if ($textComment === "") {
+                alert("Comment can't be empty");
+                return;
+            }
+            $.ajax({
+                method: "POST",
+                url: "/api/v1/rest-auth/registration/",
+                data: $formData,
+                dataType: "json",
+                success: function (json) {
+                     alert(json["detail"]);
+                    location.reload()
+                },
+                error: function (json) {
+                    $.each(json["responseJSON"], function (key, value) {
+                        alert (value);
+                    });
+                    location.reload()
+                }
+            })
+        })
+    })
+    </script>
+
+    <h2>Sign up</h2>
+    <form method="post" class="register-form" id="register-form">
+        {% csrf_token %}
+        <table>
+        <tr><td><label for="username">Username:</label></td>
+            <td><input type="text" name="username" id="username"></td></tr>
+
+        <tr><td><label for="email">Email:</label></td>
+        <td><input type="text" name="email" id="email"></td></tr>
+
+        <tr><td><label for="password1">Password:</label></td>
+            <td><input type="password" name="password1" id="password1"></td></tr>
+
+            <tr><td><label for="password2">Repeat password:</label></td>
+            <td><input type="password" name="password2" id="password2"></td></tr>
+
+        <tr><td><label for="role">Role:</label></td>
+            <td><select name="role" id="role">
+                <option value="STD" selected>Student</option>
+                <option value="TCH">Teacher</option>
+            </select></td></tr>
+        </table>
+        <br>
+        <input value="Submit" type="submit" >
+  </form>
+{% endblock %}

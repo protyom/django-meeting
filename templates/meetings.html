@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<script>
+    function apply(value){
+            $.ajax({
+                method: "PUT",
+                url: "/api/v1/join/"+value.toString()+"/",
+                headers:{"X-CSRFToken": "{{ csrf_token }}"},
+                dataType: "json",
+                success: function (json) {
+
+                    let button = document.getElementById("button "+value);
+                    let places = document.getElementById("places " + value);
+                    places.innerHTML = "Places: "+ json["students_count"]+" ("+json["available"]+" available)";
+                    if(json["details"]==="You have joined the meeting"){
+                        button.innerHTML="Leave"
+                    }else if (json["details"]==="You have left the meeting"){
+                        button.innerHTML="Apply"
+                    }else{
+                        alert(json["details"]);
+                    }
+
+
+                },
+                error: function (json) {
+                    alert(json);
+                }
+            });
+    }
+    $(document).ready(function() {
+
+        let page = 1;
+        function get_ajax() {
+            $.ajax({
+                method: "GET",
+                url: "/api/v1/meetings/?page=" + page.toString(),
+                dataType: "json",
+                success: function (json) {
+                    let meeting = document.getElementsByClassName("meetings")[0];
+                    if(json.length===0){
+                        meeting.innerHTML = "<h2>No meetings</h2>"
+                    }
+                    let arrayLength = json["results"].length;
+                    for (let i = 0; i < arrayLength; i++) {
+                        let dict = json["results"][i];
+                        let button_name="Apply";
+                        {% if request.user.is_authenticated %}
+                            let user_id = {{ request.user.id }};
+                            if (dict["students"].includes(user_id)){
+                                button_name = "Leave";
+                            }
+                        {% endif %}
+                        meeting.innerHTML+="<br>";
+                        meeting.innerHTML += '<div style="border-radius: 25px;' +
+                            'border: 2px solid #73AD21;width:50%; padding:30px; " id='+dict["pk"]+'></div>';
+                        document.getElementById(dict["pk"]).innerHTML = "<h2>" +json["results"][i]["name"]+
+                            "</h2><br>"+
+                        '<p>Teacher: '+dict["teacher_name"]+' ('+dict["teacher_country"]+')</p><br>'+
+                        '<p>Date: '+dict["date"].replace(new RegExp("[TZ]", "g")," ")+'</p><br>'+'<p id="places '+dict["pk"]+'">Places: '+dict["students_count"]+' ('+
+                            (dict["students_count"]-dict["students"].length).toString()+' available)</p><br>'+
+                        '<div style="width:75%">'+dict["details"]+'</div><br><button onclick="apply(this.value)" class="btn btn-primary" value="'+dict["pk"]+'" id="button '+dict["pk"]+'">' +
+                            button_name+'</button>';
+
+                    }
+                    page+=1;
+                },
+                error: function (json) {
+                    alert("No more meetings");
+                }
+            });
+        }
+        get_ajax();
+        $( ".btn.btn-outline-primary" ).click(function() {
+            get_ajax();
+        });
+
+    })
+</script>
+    <H1>All meetings</H1>
+    <div class="meetings">
+
+    </div>
+    <br>
+    <button type="button" class="btn btn-outline-primary" style="width: 100%; margin-bottom: 20px;">Get more</button>
+{% endblock %}

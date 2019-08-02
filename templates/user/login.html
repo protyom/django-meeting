@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <script>
+    $(document).ready(function() {
+        $('.login-form').submit(function (event) {
+            event.preventDefault();
+            let $crf_token = $('[name="csrfmiddlewaretoken"]').attr('value');
+            let $formData = $(this).serialize();
+            $.ajax({
+                method: "POST",
+                url: "/api/v1/rest-auth/login/",
+                data: $formData,
+                headers:{"X-CSRFToken": $crf_token},
+                dataType: "json",
+                success: function (json) {
+                    window.location.href = "{% url 'edit_user' %}";
+                },
+                error: function (json) {
+                     $.each(json["responseJSON"], function(key, value) {
+                        alert(value);
+                     });
+                    location.reload()
+                }
+            })
+        })
+    })
+    </script>
+
+    <h2>Log in</h2>
+    <form method="post" class="login-form" id="login-form">
+        {% csrf_token %}
+        <table>
+            <tr><td><label for="email">Email:</label></td>
+                <td> <input type="text" name="email" id="email"></td></tr>
+         <tr><td><label for="password">Password:</label></td>
+             <td><input type="password" name="password" id="password"></td></tr>
+        </table>
+        <br>
+        <input value="Submit" type="submit" >
+  </form>
+{% endblock %}
